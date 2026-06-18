@@ -1,0 +1,13 @@
+node_modules/
+**/node_modules/
+
+frontend/build/
+
+# Backend generated/secret/upload files
+backend/uploads/
+
+.vscode/
+.DS_Store
+.env
+*.log
+
