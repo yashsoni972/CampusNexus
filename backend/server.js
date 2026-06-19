@@ -211,4 +211,5 @@ connectDB().finally(() => {
   });
 });
 
-module.exports = { app, io };
+module.exports = app;
+module.exports.io = io;
