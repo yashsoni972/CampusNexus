@@ -6,7 +6,6 @@ A unified, full-stack College ERP platform for students, faculty, and administra
 
 🔗 **Live Demo:** [https://campus-nexus-7l8w.vercel.app](https://campus-nexus-7l8w.vercel.app)
 
-> ⏳ Note: The backend runs on a free-tier server that sleeps when idle. The very first load after inactivity may take 30–50 seconds to wake up — please be patient on first visit!
 
 ---
 
