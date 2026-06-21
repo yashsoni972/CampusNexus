@@ -12,8 +12,8 @@ export const SocketProvider = ({ children }) => {
   useEffect(() => {
     if (!isAuthenticated || !token) return;
 
-    const socket = io('http://localhost:5000', {
-      auth: { token },
+const socket = io(process.env.REACT_APP_API_URL || 'http://localhost:5000', {
+        auth: { token },
       transports: ['websocket']
     });
 
