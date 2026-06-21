@@ -1,171 +1,115 @@
-<div align="center">
-
 # 🎓 CampusNexus
 
-### A Full-Stack College ERP Platform
+**Your campus, fully connected.**
 
-Manage students, faculty, and administration from one unified dashboard.
+A unified, full-stack College ERP platform for students, faculty, and administrators — built for modern campus life. CampusNexus brings announcements, events, club chat, complaints, and campus mail into one beautifully designed, real-time experience.
 
-[![Made with React](https://img.shields.io/badge/Frontend-React.js-61DAFB?logo=react&logoColor=white)](https://react.dev/)
-[![Made with Node](https://img.shields.io/badge/Backend-Node.js%20%2B%20Express-339933?logo=node.js&logoColor=white)](https://nodejs.org/)
-[![Database](https://img.shields.io/badge/Database-MongoDB%20Atlas-47A248?logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
-[![Auth](https://img.shields.io/badge/Auth-JWT-000000?logo=jsonwebtokens&logoColor=white)](https://jwt.io/)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](#-license)
+🔗 **Live Demo:** [https://campus-nexus-7l8w.vercel.app](https://campus-nexus-7l8w.vercel.app)
 
-[Features](#-features) • [Tech Stack](#-tech-stack) • [Getting Started](#-getting-started) • [Test Accounts](#-test-accounts) • [Roadmap](#-roadmap)
-
-</div>
-
----
-
-## 📖 About
-
-**CampusNexus** is a College ERP (Enterprise Resource Planning) platform built to centralize everyday campus operations — student records, faculty workflows, and administrative tasks — into a single, role-based web application.
-
-It's a full-stack project: a **React** frontend talks to a **Node.js / Express** REST API, backed by **MongoDB Atlas**, with **JWT-based authentication** controlling access for three distinct roles — Admin, Faculty, and Student.
-
-> ⚠️ **Status:** Actively in development. This project currently runs **locally only** — there is no hosted live demo yet. See [Getting Started](#-getting-started) below to run it on your own machine.
+> ⏳ Note: The backend runs on a free-tier server that sleeps when idle. The very first load after inactivity may take 30–50 seconds to wake up — please be patient on first visit!
 
 ---
 
 ## ✨ Features
 
-- 🔐 **Role-based access control** — separate experiences for Admin, Faculty, and Student
-- 🔑 **JWT authentication** — secure, token-based login sessions
-- 🖥️ **Modern UI** — built with React.js and styled using Tailwind CSS
-- ⚙️ **REST API backend** — powered by Node.js and Express.js
-- ☁️ **Cloud database** — data persisted in MongoDB Atlas
-- 🚀 **One-click local startup** — a single `.bat` script spins up both servers together
+- 🔐 **Secure Authentication** — JWT-based login/register with role-based access (Student / Faculty / Admin)
+- 📢 **Announcements** — Real-time campus-wide updates
+- 🎯 **Events** — Discover, RSVP, and stay connected with campus events
+- 💬 **Campus Clubs & Live Chat** — Real-time club messaging powered by Socket.IO
+- 📬 **Campus Mail** — Your own in-app college inbox
+- 📝 **Complaints Portal** — Submit and track grievances
+- 📊 **Dashboard & Analytics** — A clear, role-specific overview of campus activity
 
 ---
 
 ## 🛠️ Tech Stack
 
-| Layer | Technology | Port |
-|---|---|---|
-| **Frontend** | React.js + Tailwind CSS | `3000` |
-| **Backend** | Node.js + Express.js | `5000` |
-| **Database** | MongoDB Atlas (Cloud) | — |
-| **Auth** | JSON Web Tokens (JWT) | — |
+**Frontend**
+- React 18 + Create React App
+- Tailwind CSS for styling
+- Socket.IO Client for real-time chat
+- Axios for API communication
+
+**Backend**
+- Node.js + Express.js
+- Socket.IO for WebSocket-based real-time features
+- MongoDB Atlas with Mongoose
+- JWT for authentication
+- Helmet, CORS, and rate-limiting for security
+
+**Deployment**
+- Frontend → [Vercel](https://vercel.com)
+- Backend → [Render](https://render.com)
+- Database → [MongoDB Atlas](https://www.mongodb.com/atlas)
 
 ---
 
-## 📂 Repository Structure
+## 🚀 Try It Live
 
-> **Note:** This repository currently contains the project's root configuration and startup tooling. The `backend/` and `frontend/` application source folders referenced in the run instructions below are part of the project but have not yet been pushed to this repository — push them to `main` so the steps below work out of the box for new contributors.
+👉 **[Open CampusNexus](https://campus-nexus-7l8w.vercel.app)**
 
-| File | Description |
-|---|---|
-| [`START_CAMPUSNEXUS.bat`](./START_CAMPUSNEXUS.bat) | Windows script that kills stray Node processes and launches both the backend and frontend together |
-| [`package.json`](./package.json) | Root-level project metadata and dependency manifest |
-| [`package-lock.json`](./package-lock.json) | Locked, exact dependency versions for reproducible installs |
-| [`.gitignore`](./.gitignore) | Files and folders excluded from version control (e.g. `node_modules`, `.env`) |
-| [`README.md`](./README.md) | You are here 👋 |
+You can either register a new account or use the quick demo login buttons (Student / Faculty / Admin) on the login screen to explore instantly.
 
 ---
 
-## 🚀 Getting Started
+## 💻 Running Locally
 
-### Prerequisites
-
-- [Node.js](https://nodejs.org/) (v16 or higher recommended)
-- npm (comes bundled with Node.js)
-- A [MongoDB Atlas](https://www.mongodb.com/atlas) connection string (for the backend `.env`)
-
-### Option 1 — Easiest Way (Windows)
-
-Just double-click:
-
-```
-START_CAMPUSNEXUS.bat
+Clone the repo:
+```bash
+git clone https://github.com/yashsoni972/CampusNexus.git
+cd CampusNexus
 ```
 
-This automatically kills any conflicting Node processes and starts **both** the backend and frontend together.
-
-Then open your browser to:
-
-```
-http://localhost:3000
-```
-
-### Option 2 — Manual Setup (any OS / VS Code)
-
-**Terminal 1 — Backend**
-
+### Backend
 ```bash
 cd backend
 npm install
 npm run dev
 ```
+Create a `.env` file in `backend/` with:
+```
+MONGODB_URI=your_mongodb_atlas_uri
+JWT_SECRET=your_jwt_secret
+JWT_EXPIRE=7d
+PORT=5000
+CLIENT_URL=http://localhost:3000
+NODE_ENV=development
+```
 
-**Terminal 2 — Frontend**
-
+### Frontend
 ```bash
 cd frontend
 npm install
 npm start
 ```
-
-Then open your browser to:
-
+Create a `.env` file in `frontend/` with:
 ```
-http://localhost:3000
+REACT_APP_API_URL=http://localhost:5000
 ```
 
----
-
-## 🧪 Test Accounts
-
-These accounts aren't pre-seeded — **register them manually** through the app's sign-up flow to test each role:
-
-| Role | Email | Password |
-|---|---|---|
-| 👑 Admin | `admin@college.edu` | `admin1234` |
-| 👨‍🏫 Faculty | `faculty@college.edu` | `faculty1234` |
-| 🎓 Student | `student@college.edu` | `student1234` |
-
-> 🔒 **Security note:** These are placeholder credentials meant for local development and demos only. Never reuse simple passwords like these in a production environment.
+The app will be available at `http://localhost:3000`, connecting to the backend at `http://localhost:5000`.
 
 ---
 
-## 🗺️ Roadmap
+## 📁 Project Structure
 
-- [ ] Push `backend/` and `frontend/` source code to the repository
-- [ ] Deploy backend (Render / Railway) and frontend (Vercel / Netlify)
-- [ ] Add a live demo link once deployed
-- [ ] Add automated tests
-- [ ] Add CI/CD pipeline via GitHub Actions
-- [ ] Add API documentation
-
----
-
-## 🤝 Contributing
-
-Contributions are welcome! If you'd like to help:
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/your-feature`)
-3. Commit your changes (`git commit -m "Add your feature"`)
-4. Push to the branch (`git push origin feature/your-feature`)
-5. Open a Pull Request
+```
+CampusNexus/
+├── frontend/          # React app (UI, pages, contexts, components)
+├── backend/           # Express API + Socket.IO server
+│   ├── controllers/   # Route logic
+│   ├── models/        # Mongoose schemas
+│   ├── routes/        # API endpoints
+│   └── middleware/     # Auth, validation, uploads
+└── README.md
+```
 
 ---
 
 ## 📄 License
 
-This project is currently unlicensed. Consider adding an [MIT License](https://choosealicense.com/licenses/mit/) or another license of your choice to clarify how others can use this code.
+This project is built for educational purposes as a campus ERP demonstration.
 
 ---
 
-## 👤 Author
-
-**Yash Soni**
-GitHub: [@yashsoni972](https://github.com/yashsoni972)
-
----
-
-<div align="center">
-
-Made with for campuses everywhere
-
-</div>
+<p align="center">Built with for modern campus life — by Yash Soni</p>
