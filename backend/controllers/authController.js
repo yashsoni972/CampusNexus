@@ -13,7 +13,40 @@ const generateToken = (id) => {
 // @access  Public
 const register = async (req, res) => {
   try {
-    const { name, email, password, role, rollNumber, employeeId, department, semester, batch, program } = req.body;
+    const { name, email, password, role, rollNumber, employeeId, department, semester, batch, program, phone } = req.body;
+
+    // Basic identity guardrails
+    const allowedDomain = (process.env.ALLOWED_EMAIL_DOMAIN || 'gmail.com').toLowerCase();
+    const normalizedEmail = (email || '').toLowerCase().trim();
+
+    if (!normalizedEmail.endsWith(`@${allowedDomain}`)) {
+      return res.status(400).json({ message: `Email must be a ${allowedDomain} address` });
+    }
+
+    // Restrict role self-registration to student/faculty/admin only if needed
+    const safeRole = role || 'student';
+    if (!['student', 'faculty', 'admin'].includes(safeRole)) {
+      return res.status(400).json({ message: 'Invalid role' });
+    }
+
+    // rollNumber: allow digits length 1..14 (your note: max length 14 digits)
+    const rn = (rollNumber ?? '').toString().trim();
+    if (safeRole === 'student' && rn.length === 0) {
+      return res.status(400).json({ message: 'Roll number is required for students' });
+    }
+    if (rn && !/^\d{1,14}$/.test(rn)) {
+      return res.status(400).json({ message: 'Roll number must be up to 14 digits' });
+    }
+
+    // phone: exact 10 digits if provided
+    const p = (phone ?? '').toString().trim();
+    if (p && !/^\d{10}$/.test(p)) {
+      return res.status(400).json({ message: 'Phone number must be exactly 10 digits' });
+    }
+
+    // normalize email
+    email = normalizedEmail;
+    role = safeRole;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
@@ -30,14 +63,23 @@ const register = async (req, res) => {
 
     const user = await User.create({
       name, email, password, role: role || 'student',
-      rollNumber, employeeId, department, semester, batch, program
+      rollNumber, employeeId, department, semester, batch, program,
+      // Require verification before dashboard access
+      isActive: false,
+      isEmailVerified: false
     });
 
-    const token = generateToken(user._id);
+    // NOTE: No email-sending flow exists in this codebase right now,
+    // so we return a verification token for you to hook up later.
+    const verificationToken = jwt.sign(
+      { id: user._id },
+      process.env.JWT_SECRET,
+      { expiresIn: process.env.VERIFY_EXPIRE || '15m' }
+    );
 
     res.status(201).json({
-      message: 'Registration successful',
-      token,
+      message: 'Registration successful. Please verify your email before login.',
+      verificationToken,
       user: {
         _id: user._id,
         name: user.name,
@@ -77,7 +119,11 @@ const login = async (req, res) => {
     }
 
     if (!user.isActive) {
-      return res.status(403).json({ message: 'Account deactivated. Contact admin.' });
+      return res.status(403).json({ message: 'Account not active. Please verify your email first.' });
+    }
+
+    if (!user.isEmailVerified) {
+      return res.status(403).json({ message: 'Email not verified. Please verify your email first.' });
     }
 
     const isMatch = await user.comparePassword(password);
@@ -154,4 +200,38 @@ const changePassword = async (req, res) => {
   }
 };
 
-module.exports = { register, login, getMe, changePassword };
+// @desc    Verify email (activate account)
+// @route   GET /api/auth/verify-email?token=...
+// @access  Public
+const verifyEmail = async (req, res) => {
+  try {
+    const { token } = req.query;
+    if (!token) {
+      return res.status(400).json({ message: 'Verification token is required' });
+    }
+
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const userId = decoded?.id;
+    if (!userId) {
+      return res.status(400).json({ message: 'Invalid verification token' });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.isEmailVerified = true;
+    user.isActive = true;
+    await user.save({ validateBeforeSave: false });
+
+    res.json({ message: 'Email verified successfully. You can now login.' });
+  } catch (error) {
+    if (error.name === 'TokenExpiredError') {
+      return res.status(400).json({ message: 'Verification token has expired' });
+    }
+    return res.status(400).json({ message: 'Invalid verification token' });
+  }
+};
+
+module.exports = { register, login, getMe, changePassword, verifyEmail };

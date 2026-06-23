@@ -9,6 +9,7 @@ import Layout from './components/layout/Layout';
 // Auth pages
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
+import VerifyEmail from './pages/auth/VerifyEmail';
 
 // Dashboard pages
 import Dashboard from './pages/dashboard/Dashboard';
@@ -66,6 +67,7 @@ function App() {
           {/* Public routes */}
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>

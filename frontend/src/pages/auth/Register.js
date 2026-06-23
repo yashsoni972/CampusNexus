@@ -37,8 +37,8 @@ export default function Register() {
     setLoading(true);
     try {
       const { confirmPassword, ...userData } = form;
-      await register(userData);
-      navigate('/dashboard');
+      const result = await register(userData);
+      navigate(`/verify-email?token=${encodeURIComponent(result?.verificationToken || '')}`);
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed';
       toast.error(msg);
@@ -54,7 +54,7 @@ export default function Register() {
     `input-field ${errors[field] ? 'border-[#FF453A]' : ''}`;
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="relative flex items-center justify-center min-h-screen p-4 overflow-hidden">
 
       {/* Mesh BG */}
       <div className="fixed inset-0 -z-10"
@@ -68,7 +68,7 @@ export default function Register() {
 
         {/* Logo */}
         <div className="flex items-center gap-2.5 justify-center mb-6">
-          <div className="w-10 h-10 rounded-2xl flex items-center justify-center"
+          <div className="flex items-center justify-center w-10 h-10 rounded-2xl"
             style={{ background:'linear-gradient(135deg,#0A84FF,#5E5CE6)', boxShadow:'0 6px 20px rgba(10,132,255,0.4)' }}>
             <AcademicCapIcon className="w-5 h-5 text-white" />
           </div>
@@ -76,7 +76,7 @@ export default function Register() {
         </div>
 
         {/* Glass card */}
-        <div className="rounded-3xl overflow-hidden"
+        <div className="overflow-hidden rounded-3xl"
           style={{
             background:'rgba(255,255,255,0.82)',
             backdropFilter:'blur(40px)',
@@ -96,7 +96,7 @@ export default function Register() {
               {[1,2].map(s => (
                 <React.Fragment key={s}>
                   <div className="flex items-center gap-2">
-                    <div className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300"
+                    <div className="flex items-center justify-center text-xs font-bold transition-all duration-300 rounded-full w-7 h-7"
                       style={
                         s < step  ? { background:'#30D158', color:'white', boxShadow:'0 3px 10px rgba(48,209,88,0.4)' }
                         : s === step ? { background:'rgba(10,132,255,0.12)', color:'#0A84FF', border:'2px solid #0A84FF' }
@@ -104,7 +104,7 @@ export default function Register() {
                       }>
                       {s < step ? <CheckIcon className="w-3.5 h-3.5" /> : s}
                     </div>
-                    <span className="text-xs font-semibold hidden sm:block"
+                    <span className="hidden text-xs font-semibold sm:block"
                       style={{ color: s <= step ? '#1c1c1e' : 'rgba(60,60,67,0.4)' }}>
                       {s === 1 ? 'Account Info' : 'Academic Details'}
                     </span>
@@ -208,10 +208,10 @@ export default function Register() {
                   </>
                 )}
                 <div className="flex gap-3 pt-1">
-                  <button type="button" onClick={() => setStep(1)} className="btn-secondary flex-1 py-3">← Back</button>
+                  <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 btn-secondary">← Back</button>
                   <button type="submit" disabled={loading} className="btn-primary flex-1 py-3 text-[15px]">
                     {loading
-                      ? <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Creating...</>
+                      ? <><div className="w-4 h-4 border-2 rounded-full border-white/30 border-t-white animate-spin" /> Creating...</>
                       : 'Create Account'
                     }
                   </button>

@@ -46,15 +46,16 @@ export const AuthProvider = ({ children }) => {
 
   const register = useCallback(async (userData) => {
     const response = await api.post('/auth/register', userData);
-    const { token: newToken, user: newUser } = response.data;
+    const { verificationToken, user: newUser } = response.data;
 
-    localStorage.setItem('campusnexus_token', newToken);
-    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
-    setToken(newToken);
-    setUser(newUser);
+    // User is created but must verify email before login.
+    localStorage.removeItem('campusnexus_token');
+    delete api.defaults.headers.common['Authorization'];
+    setToken(null);
+    setUser(null);
 
-    toast.success('Account created successfully!');
-    return newUser;
+    toast.success('Account created! Verify your email to login.');
+    return { verificationToken, user: newUser };
   }, []);
 
   const logout = useCallback(() => {
