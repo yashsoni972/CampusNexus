@@ -157,6 +157,21 @@ const userSchema = new mongoose.Schema({
     type: Date
   },
 
+  // OTP for email verification and login 2FA
+  otp: {
+    type: String,
+    select: false
+  },
+  otpExpiry: {
+    type: Date,
+    select: false
+  },
+  otpPurpose: {
+    type: String,
+    enum: ['verification', 'login'],
+    select: false
+  },
+
   // Parent/Guardian info (for students)
   guardian: {
     name: String,

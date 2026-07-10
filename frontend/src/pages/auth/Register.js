@@ -38,7 +38,11 @@ export default function Register() {
     try {
       const { confirmPassword, ...userData } = form;
       const result = await register(userData);
-      navigate(`/verify-email?token=${encodeURIComponent(result?.verificationToken || '')}`);
+      if (result?.otpRequired) {
+        navigate('/verify-otp', { state: { email: result.email, purpose: 'verification' } });
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       const msg = err.response?.data?.message || 'Registration failed';
       toast.error(msg);

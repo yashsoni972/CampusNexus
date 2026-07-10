@@ -200,4 +200,37 @@ const getStudentDashboard = async (req, res) => {
   }
 };
 
-module.exports = { getAdminAnalytics, getStudentDashboard };
+// @desc    Get faculty dashboard data
+// @route   GET /api/dashboard/faculty
+// @access  Private (faculty)
+const getFacultyDashboard = async (req, res) => {
+  try {
+    const facultyId = req.user._id;
+    const dept = req.user.department;
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+    const deptFilter = dept ? { department: dept } : {};
+
+    const [totalStudents, announcementsThisMonth, openComplaints, upcomingEvents, recentComplaints, recentAnnouncements, myEvents] = await Promise.all([
+      User.countDocuments({ role: 'student', isActive: true, ...deptFilter }),
+      Announcement.countDocuments({ author: facultyId, createdAt: { $gte: startOfMonth } }),
+      Complaint.countDocuments({ status: 'open' }),
+      Event.countDocuments({ organizer: facultyId, startDate: { $gte: now }, status: 'upcoming' }),
+      Complaint.find().populate('submittedBy', 'name rollNumber').sort({ createdAt: -1 }).limit(5).select('ticketId title status category createdAt'),
+      Announcement.find({ author: facultyId }).populate('author', 'name role').sort({ createdAt: -1 }).limit(5).select('title category priority createdAt'),
+      Event.find({ organizer: facultyId, startDate: { $gte: now } }).sort({ startDate: 1 }).limit(5).select('title startDate venue status'),
+    ]);
+
+    res.json({
+      overview: { totalStudents, announcementsThisMonth, openComplaints, upcomingEvents },
+      recentActivity: { complaints: recentComplaints, announcements: recentAnnouncements },
+      myEvents
+    });
+  } catch (error) {
+    console.error('Faculty dashboard error:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+module.exports = { getAdminAnalytics, getFacultyDashboard, getStudentDashboard };

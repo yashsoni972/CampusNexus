@@ -6,6 +6,8 @@ import {
   PencilSquareIcon, ArrowLeftIcon, ShieldCheckIcon,
   TrophyIcon, ArrowRightIcon, SparklesIcon, ChartBarIcon,
   LinkIcon, CodeBracketIcon,
+  ClipboardDocumentListIcon, ClipboardDocumentCheckIcon,
+  BellAlertIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
@@ -33,14 +35,16 @@ const InfoRow = ({ icon: Icon, label, value, accentBg = 'bg-indigo-50', accentTe
   ) : null
 );
 
-const StatCard = ({ label, value, color, icon, delay = 0 }) => (
+const StatCard = ({ label, value, color, icon: Icon, delay = 0 }) => (
   <div
-    className={`rounded-2xl p-4 ${color} hover-lift cursor-default`}
+    className={`rounded-2xl p-3 sm:p-4 ${color} hover-lift cursor-default`}
     style={{ animation: `slideUpFade 0.5s cubic-bezier(0.22,1,0.36,1) ${delay}ms both` }}
   >
-    <div className="text-2xl mb-1.5">{icon}</div>
-    <p className="text-2xl font-extrabold">{value ?? '—'}</p>
-    <p className="text-xs font-semibold mt-0.5 opacity-70">{label}</p>
+    <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-lg bg-white/40 flex items-center justify-center mb-2">
+      <Icon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+    </div>
+    <p className="text-xl sm:text-2xl font-extrabold">{value ?? '—'}</p>
+    <p className="text-[10px] sm:text-xs font-semibold mt-0.5 opacity-70 leading-tight">{label}</p>
   </div>
 );
 
@@ -170,16 +174,16 @@ export default function Profile() {
       {/* ── Stats (own profile) ── */}
       {isOwnProfile && (
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 stagger">
-          <StatCard label="Complaints Filed"  value={stats?.userStats?.totalComplaints}   color="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 border border-blue-100"   icon="📋" delay={100} />
-          <StatCard label="Resolved"          value={stats?.userStats?.resolvedComplaints} color="bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-700 border border-emerald-100" icon="✅" delay={150} />
-          <StatCard label="Events Joined"     value={stats?.userStats?.eventsRegistered}  color="bg-gradient-to-br from-violet-50 to-purple-50 text-violet-700 border border-violet-100" icon="🎯" delay={200} />
-          <StatCard label="Announcements"     value={stats?.userStats?.announcementsRead} color="bg-gradient-to-br from-amber-50 to-orange-50 text-amber-700 border border-amber-100"  icon="📢" delay={250} />
+          <StatCard label="Complaints Filed"  value={stats?.userStats?.totalComplaints}   color="bg-gradient-to-br from-blue-50 to-indigo-50 text-blue-700 border border-blue-100"   icon={ClipboardDocumentListIcon} delay={100} />
+          <StatCard label="Resolved"          value={stats?.userStats?.resolvedComplaints} color="bg-gradient-to-br from-emerald-50 to-teal-50 text-emerald-700 border border-emerald-100" icon={ClipboardDocumentCheckIcon} delay={150} />
+          <StatCard label="Events Joined"     value={stats?.userStats?.eventsRegistered}  color="bg-gradient-to-br from-violet-50 to-purple-50 text-violet-700 border border-violet-100" icon={TrophyIcon} delay={200} />
+          <StatCard label="Announcements"     value={stats?.userStats?.announcementsRead} color="bg-gradient-to-br from-amber-50 to-orange-50 text-amber-700 border border-amber-100"  icon={BellAlertIcon} delay={250} />
         </div>
       )}
 
       {/* ── Student CGPA + Attendance ── */}
       {isOwnProfile && profile.role === 'student' && (profile.cgpa !== undefined || profile.attendance !== undefined) && (
-        <div className="grid grid-cols-2 gap-3" style={{ animation: 'slideUpFade 0.5s cubic-bezier(0.22,1,0.36,1) 0.28s both' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {profile.cgpa !== undefined && (
             <div className="bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl p-5 text-white hover-lift">
               <div className="flex items-center gap-2 mb-2">

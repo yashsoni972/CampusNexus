@@ -7,8 +7,26 @@ const { protect, authorize } = require('../middleware/auth');
 const {
   getUsers, getUserProfile, updateUserProfile,
   getStudents, toggleUserStatus, deleteUser,
-  changeUserRole, changePassword, uploadCertificate
+  changeUserRole, changePassword, uploadCertificate, uploadAvatar, getAuditLog
 } = require('../controllers/userController');
+
+// Image-only multer for avatars
+const avatarStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const fs = require('fs');
+    fs.mkdirSync('uploads/avatars', { recursive: true });
+    cb(null, 'uploads/avatars');
+  },
+  filename: (req, file, cb) => cb(null, `${uuidv4()}${path.extname(file.originalname).toLowerCase()}`)
+});
+const avatarUpload = multer({
+  storage: avatarStorage,
+  limits: { fileSize: 3 * 1024 * 1024 },
+  fileFilter: (req, file, cb) => {
+    if (/image\/(jpeg|jpg|png|webp)/.test(file.mimetype)) return cb(null, true);
+    cb(new Error('Only JPEG/PNG/WebP images allowed'));
+  }
+});
 
 // PDF-only multer for certificates
 const certStorage = multer.diskStorage({
@@ -26,6 +44,10 @@ const certUpload = multer({
 
 router.get('/', protect, authorize('admin', 'faculty'), getUsers);
 router.get('/students', protect, authorize('admin', 'faculty'), getStudents);
+router.get('/audit-log', protect, authorize('admin'), getAuditLog);
+
+// Avatar upload
+router.post('/avatar', protect, avatarUpload.single('avatar'), uploadAvatar);
 
 // Certificate upload
 router.post('/achievements/certificate', protect, certUpload.single('certificate'), uploadCertificate);

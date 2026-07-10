@@ -44,6 +44,9 @@ export default function ClubChat() {
   const [showMembers, setShowMembers] = useState(true);
   const [typing, setTyping]   = useState([]);
   const [memberMenuId, setMemberMenuId] = useState(null);
+  const [hasMore, setHasMore] = useState(false);
+  const [loadingOlder, setLoadingOlder] = useState(false);
+  const [page, setPage]       = useState(1);
 
   const bottomRef  = useRef(null);
   const typingTimer = useRef(null);
@@ -53,10 +56,12 @@ export default function ClubChat() {
     try {
       const [clubRes, msgRes] = await Promise.all([
         api.get(`/clubs/${id}`),
-        api.get(`/clubs/${id}/messages`)
+        api.get(`/clubs/${id}/messages?page=1&limit=50`)
       ]);
       setClub(clubRes.data.club);
       setMessages(msgRes.data.messages || []);
+      setHasMore(msgRes.data.hasMore || false);
+      setPage(1);
     } catch (err) {
       if (err.response?.status === 403) {
         toast.error('Join the club to access chat');
@@ -68,6 +73,22 @@ export default function ClubChat() {
       setLoading(false);
     }
   }, [id, navigate]);
+
+  const loadOlderMessages = async () => {
+    if (loadingOlder || !hasMore) return;
+    setLoadingOlder(true);
+    try {
+      const nextPage = page + 1;
+      const res = await api.get(`/clubs/${id}/messages?page=${nextPage}&limit=50`);
+      setMessages(prev => [...(res.data.messages || []), ...prev]);
+      setHasMore(res.data.hasMore || false);
+      setPage(nextPage);
+    } catch {
+      toast.error('Failed to load older messages');
+    } finally {
+      setLoadingOlder(false);
+    }
+  };
 
   useEffect(() => { fetchClub(); }, [fetchClub]);
 
@@ -193,6 +214,20 @@ export default function ClubChat() {
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-4 py-4 space-y-3">
+
+          {/* Load older messages button */}
+          {hasMore && (
+            <div className="text-center pb-2">
+              <button
+                onClick={loadOlderMessages}
+                disabled={loadingOlder}
+                className="px-4 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-full hover:bg-indigo-100 transition-colors disabled:opacity-50"
+              >
+                {loadingOlder ? 'Loading...' : 'Load older messages'}
+              </button>
+            </div>
+          )}
+
           {messages.length === 0 && (
             <div className="text-center py-16 text-gray-400">
               <PaperAirplaneIcon className="w-10 h-10 mx-auto mb-2 opacity-30" />

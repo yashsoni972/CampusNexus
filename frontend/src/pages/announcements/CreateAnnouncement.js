@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeftIcon, PaperClipIcon, XMarkIcon, DocumentIcon, PhotoIcon } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
+import { useAuth } from '../../contexts/AuthContext';
 
 const CATEGORIES = ['Academic', 'Administrative', 'Cultural', 'Sports', 'Placement', 'Holiday', 'Exam', 'General'];
 const PRIORITIES = ['low', 'medium', 'high', 'urgent'];
@@ -16,10 +17,13 @@ const AUDIENCES = [
 
 const CreateAnnouncement = () => {
   const navigate = useNavigate();
+  const { user, isFaculty } = useAuth();
   const [loading, setLoading] = useState(false);
   const [form, setForm] = useState({
     title: '', content: '', category: 'General', priority: 'medium',
-    targetAudience: 'all', targetDepartment: '', targetBatch: '',
+    targetAudience: isFaculty ? 'specific_department' : 'all',
+    targetDepartment: isFaculty && user?.department ? user.department : '',
+    targetBatch: '',
     isPinned: false, expiryDate: '', tags: ''
   });
   const [errors, setErrors] = useState({});

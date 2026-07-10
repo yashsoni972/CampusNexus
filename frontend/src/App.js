@@ -10,6 +10,7 @@ import Layout from './components/layout/Layout';
 import Login from './pages/auth/Login';
 import Register from './pages/auth/Register';
 import VerifyEmail from './pages/auth/VerifyEmail';
+import VerifyOTP from './pages/auth/VerifyOTP';
 
 // Dashboard pages
 import Dashboard from './pages/dashboard/Dashboard';
@@ -68,6 +69,7 @@ function App() {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/verify-email" element={<VerifyEmail />} />
+          <Route path="/verify-otp" element={<VerifyOTP />} />
 
           {/* Protected routes */}
           <Route element={<ProtectedRoute />}>

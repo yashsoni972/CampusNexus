@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { EyeIcon, EyeSlashIcon, AcademicCapIcon } from '@heroicons/react/24/outline';
+import { EyeIcon, EyeSlashIcon, AcademicCapIcon, MegaphoneIcon, CalendarDaysIcon, UserGroupIcon, EnvelopeIcon, UserCircleIcon, ShieldCheckIcon } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
+import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const DEMOS = {
@@ -11,10 +12,10 @@ const DEMOS = {
 };
 
 const FEATURES = [
-  { icon: '📢', label: 'Announcements',  desc: 'Real-time campus updates' },
-  { icon: '🎯', label: 'Events',         desc: 'Stay connected on campus' },
-  { icon: '💬', label: 'Campus Clubs',   desc: 'Chat with your community' },
-  { icon: '✉️', label: 'Campus Mail',    desc: 'Your own college inbox' },
+  { icon: MegaphoneIcon, label: 'Announcements',  desc: 'Real-time campus updates' },
+  { icon: CalendarDaysIcon, label: 'Events',       desc: 'Stay connected on campus' },
+  { icon: UserGroupIcon,  label: 'Campus Clubs',  desc: 'Chat with your community' },
+  { icon: EnvelopeIcon,   label: 'Campus Mail',   desc: 'Your own college inbox' },
 ];
 
 export default function Login() {
@@ -24,6 +25,12 @@ export default function Login() {
   const [showPass, setShowPass] = useState(false);
   const [loading, setLoading]   = useState(false);
   const [errors, setErrors]     = useState({});
+  // forgot password state
+  const [forgotStep, setForgotStep] = useState(0); // 0=login, 1=enter email, 2=enter otp+newpass
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [forgotLoading, setForgotLoading] = useState(false);
 
   const validate = () => {
     const e = {};
@@ -39,11 +46,39 @@ export default function Login() {
     if (!validate()) return;
     setLoading(true);
     try {
-      await login(form.email, form.password);
-      navigate('/dashboard');
+      const result = await login(form.email, form.password);
+      if (result?.otpRequired) {
+        navigate('/verify-otp', { state: { email: result.email, purpose: result.purpose || 'login' } });
+      } else {
+        navigate('/dashboard');
+      }
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed. Check your credentials.');
     } finally { setLoading(false); }
+  };
+
+  const handleForgotSendOtp = async () => {
+    if (!forgotEmail) return toast.error('Enter your email');
+    setForgotLoading(true);
+    try {
+      await api.post('/auth/forgot-password', { email: forgotEmail });
+      toast.success('OTP sent to your email');
+      setForgotStep(2);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to send OTP');
+    } finally { setForgotLoading(false); }
+  };
+
+  const handleForgotReset = async () => {
+    if (!forgotOtp || !newPassword) return toast.error('Fill all fields');
+    setForgotLoading(true);
+    try {
+      await api.post('/auth/reset-password', { email: forgotEmail, otp: forgotOtp, newPassword });
+      toast.success('Password reset! Please log in.');
+      setForgotStep(0);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Reset failed');
+    } finally { setForgotLoading(false); }
   };
 
   return (
@@ -113,7 +148,9 @@ export default function Login() {
                   border:'1px solid rgba(255,255,255,0.1)',
                   backdropFilter:'blur(12px)',
                 }}>
-                <span className="text-2xl">{f.icon}</span>
+                <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center">
+                  <f.icon className="w-4 h-4 text-white/80" />
+                </div>
                 <p className="text-white font-semibold text-sm mt-2 tracking-tight">{f.label}</p>
                 <p className="text-white/50 text-xs mt-0.5">{f.desc}</p>
               </div>
@@ -179,6 +216,10 @@ export default function Login() {
                   </button>
                 </div>
                 {errors.password && <p className="text-[#FF453A] text-xs mt-1 font-medium">{errors.password}</p>}
+                <button type="button" onClick={() => { setForgotStep(1); setForgotEmail(form.email); }}
+                  className="text-xs text-[#0A84FF] hover:underline font-medium mt-1 block text-right w-full">
+                  Forgot password?
+                </button>
               </div>
 
               <button type="submit" disabled={loading} className="btn-primary w-full py-3 text-[15px] font-semibold">
@@ -198,13 +239,14 @@ export default function Login() {
               </div>
               <div className="grid grid-cols-3 gap-2">
                 {[
-                  { role:'student', label:'🎓 Student', color:'rgba(48,209,88,0.12)',  border:'rgba(48,209,88,0.25)',  text:'#1a9e45' },
-                  { role:'faculty', label:'👨‍🏫 Faculty', color:'rgba(10,132,255,0.1)',  border:'rgba(10,132,255,0.2)',  text:'#0A84FF' },
-                  { role:'admin',   label:'🛡️ Admin',   color:'rgba(255,69,58,0.1)',   border:'rgba(255,69,58,0.2)',   text:'#FF453A' },
-                ].map(({ role, label, color, border, text }) => (
+                  { role:'student', label:'Student', color:'rgba(48,209,88,0.12)',  border:'rgba(48,209,88,0.25)',  text:'#1a9e45', Icon: UserCircleIcon },
+                  { role:'faculty', label:'Faculty', color:'rgba(10,132,255,0.1)',  border:'rgba(10,132,255,0.2)',  text:'#0A84FF', Icon: AcademicCapIcon },
+                  { role:'admin',   label:'Admin',   color:'rgba(255,69,58,0.1)',   border:'rgba(255,69,58,0.2)',   text:'#FF453A', Icon: ShieldCheckIcon },
+                ].map(({ role, label, color, border, text, Icon }) => (
                   <button key={role} type="button" onClick={() => setForm(DEMOS[role])}
-                    className="text-xs font-semibold py-2.5 px-2 rounded-2xl transition-all hover:scale-105 active:scale-95"
+                    className="flex items-center justify-center gap-1.5 text-xs font-semibold py-2.5 px-2 rounded-2xl transition-all hover:scale-105 active:scale-95"
                     style={{ background:color, border:`1px solid ${border}`, color:text }}>
+                    <Icon className="w-3.5 h-3.5" />
                     {label}
                   </button>
                 ))}
@@ -216,6 +258,51 @@ export default function Login() {
             Don't have an account?{' '}
             <Link to="/register" className="font-semibold text-[#0A84FF] hover:text-[#0870d8] transition-colors">Register here</Link>
           </p>
+
+          {/* Forgot Password Modal */}
+          {forgotStep > 0 && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+              <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 space-y-4">
+                <h3 className="text-base font-bold text-gray-900">
+                  {forgotStep === 1 ? 'Forgot Password' : 'Reset Password'}
+                </h3>
+                {forgotStep === 1 ? (
+                  <>
+                    <p className="text-sm text-gray-500">Enter your registered email to receive an OTP.</p>
+                    <input type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
+                      placeholder="you@college.edu"
+                      className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <div className="flex gap-3">
+                      <button onClick={() => setForgotStep(0)}
+                        className="flex-1 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200">Cancel</button>
+                      <button onClick={handleForgotSendOtp} disabled={forgotLoading}
+                        className="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50">
+                        {forgotLoading ? 'Sending...' : 'Send OTP'}
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm text-gray-500">Enter the OTP sent to <strong>{forgotEmail}</strong> and your new password.</p>
+                    <input type="text" value={forgotOtp} onChange={e => setForgotOtp(e.target.value)}
+                      placeholder="6-digit OTP" maxLength={6}
+                      className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                      placeholder="New password (min 6 chars)"
+                      className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" />
+                    <div className="flex gap-3">
+                      <button onClick={() => setForgotStep(0)}
+                        className="flex-1 py-2.5 text-sm font-semibold text-gray-600 bg-gray-100 rounded-xl hover:bg-gray-200">Cancel</button>
+                      <button onClick={handleForgotReset} disabled={forgotLoading}
+                        className="flex-1 py-2.5 text-sm font-semibold text-white bg-indigo-600 rounded-xl hover:bg-indigo-700 disabled:opacity-50">
+                        {forgotLoading ? 'Resetting...' : 'Reset Password'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

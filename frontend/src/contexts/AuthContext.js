@@ -31,31 +31,49 @@ export const AuthProvider = ({ children }) => {
     initAuth();
   }, []);
 
+  const register = useCallback(async (userData) => {
+    const response = await api.post('/auth/register', userData);
+    const { token: newToken, user: newUser, otpRequired, email } = response.data;
+
+    if (otpRequired) {
+      // OTP required — don't log in yet, return info for OTP screen
+      return { otpRequired: true, email };
+    }
+
+    // No OTP required — log in directly
+    localStorage.setItem('campusnexus_token', newToken);
+    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    setToken(newToken);
+    setUser(newUser);
+    toast.success(`Welcome to CampusNexus, ${newUser.name.split(' ')[0]}!`);
+    return { otpRequired: false };
+  }, []);
+
+  const verifyOtp = useCallback(async (email, otp) => {
+    const response = await api.post('/auth/verify-otp', { email, otp });
+    const { token: newToken, user: newUser } = response.data;
+    localStorage.setItem('campusnexus_token', newToken);
+    api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
+    setToken(newToken);
+    setUser(newUser);
+    toast.success(`Welcome, ${newUser.name.split(' ')[0]}!`);
+    return newUser;
+  }, []);
+
   const login = useCallback(async (email, password) => {
     const response = await api.post('/auth/login', { email, password });
-    const { token: newToken, user: userData } = response.data;
+    const { token: newToken, user: userData, otpRequired, email: respEmail, purpose } = response.data;
+
+    if (otpRequired) {
+      return { otpRequired: true, email: respEmail || email, purpose };
+    }
 
     localStorage.setItem('campusnexus_token', newToken);
     api.defaults.headers.common['Authorization'] = `Bearer ${newToken}`;
     setToken(newToken);
     setUser(userData);
-
     toast.success(`Welcome back, ${userData.name.split(' ')[0]}!`);
-    return userData;
-  }, []);
-
-  const register = useCallback(async (userData) => {
-    const response = await api.post('/auth/register', userData);
-    const { verificationToken, user: newUser } = response.data;
-
-    // User is created but must verify email before login.
-    localStorage.removeItem('campusnexus_token');
-    delete api.defaults.headers.common['Authorization'];
-    setToken(null);
-    setUser(null);
-
-    toast.success('Account created! Verify your email to login.');
-    return { verificationToken, user: newUser };
+    return { otpRequired: false };
   }, []);
 
   const logout = useCallback(() => {
@@ -71,13 +89,8 @@ export const AuthProvider = ({ children }) => {
   }, []);
 
   const value = {
-    user,
-    token,
-    loading,
-    login,
-    register,
-    logout,
-    updateUser,
+    user, token, loading,
+    login, register, logout, updateUser, verifyOtp,
     isAuthenticated: !!user,
     isAdmin: user?.role === 'admin',
     isFaculty: user?.role === 'faculty',

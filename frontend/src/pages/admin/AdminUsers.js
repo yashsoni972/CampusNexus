@@ -164,6 +164,11 @@ export default function AdminUsers() {
   const [deleteModal, setDeleteModal] = useState({ open: false, user: null });
   const [roleModal, setRoleModal] = useState({ open: false, user: null, newRole: '' });
   const [actionLoading, setActionLoading] = useState(false);
+  const [selected, setSelected] = useState([]);
+  const [bulkLoading, setBulkLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('users'); // 'users' | 'audit'
+  const [auditLog, setAuditLog]   = useState([]);
+  const [auditLoading, setAuditLoading] = useState(false);
   const LIMIT = 10;
 
   const fetchUsers = useCallback(async () => {
@@ -185,6 +190,19 @@ export default function AdminUsers() {
 
   useEffect(() => { fetchUsers(); }, [fetchUsers]);
   useEffect(() => { setPage(1); }, [search, roleFilter]);
+
+  const fetchAuditLog = useCallback(async () => {
+    setAuditLoading(true);
+    try {
+      const res = await api.get('/users/audit-log');
+      setAuditLog(res.data.log || []);
+    } catch { toast.error('Failed to load audit log'); }
+    finally { setAuditLoading(false); }
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'audit') fetchAuditLog();
+  }, [activeTab, fetchAuditLog]);
 
   const handleDeleteUser = async () => {
     if (!deleteModal.user) return;
@@ -226,6 +244,33 @@ export default function AdminUsers() {
     }
   };
 
+  const toggleSelect = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  const toggleSelectAll = () => setSelected(prev => prev.length === users.length ? [] : users.map(u => u._id));
+
+  const handleBulkDelete = async () => {
+    if (!selected.length) return;
+    setBulkLoading(true);
+    try {
+      await Promise.all(selected.map(id => api.delete(`/users/${id}`)));
+      toast.success(`${selected.length} user(s) deleted`);
+      setSelected([]);
+      fetchUsers();
+    } catch { toast.error('Bulk delete failed'); }
+    finally { setBulkLoading(false); }
+  };
+
+  const handleBulkToggle = async (activate) => {
+    if (!selected.length) return;
+    setBulkLoading(true);
+    try {
+      await Promise.all(selected.map(id => api.put(`/users/${id}/toggle-status`)));
+      toast.success(`${selected.length} user(s) ${activate ? 'activated' : 'deactivated'}`);
+      setSelected([]);
+      fetchUsers();
+    } catch { toast.error('Bulk update failed'); }
+    finally { setBulkLoading(false); }
+  };
+
   const counts = {
     students: users.filter(u => u.role === 'student').length,
     faculty:  users.filter(u => u.role === 'faculty').length,
@@ -256,6 +301,58 @@ export default function AdminUsers() {
           Refresh
         </button>
       </div>
+
+      {/* Tabs — Users / Audit Log */}
+      {isAdmin && (
+        <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-auto sm:inline-flex">
+          {[
+            { id: 'users', label: 'All Users' },
+            { id: 'audit', label: 'Audit Log' },
+          ].map(t => (
+            <button key={t.id} onClick={() => setActiveTab(t.id)}
+              className={`flex-1 sm:flex-none px-5 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === t.id ? 'bg-white text-indigo-700 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {/* ── Audit Log tab ── */}
+      {activeTab === 'audit' && (
+        <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <h3 className="text-sm font-bold text-gray-800">Recent User Activity (Last 50)</h3>
+            <button onClick={fetchAuditLog} className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100">
+              <ArrowPathIcon className="w-3.5 h-3.5" /> Refresh
+            </button>
+          </div>
+          {auditLoading ? (
+            <div className="py-10 text-center text-gray-400 text-sm">Loading...</div>
+          ) : (
+            <div className="divide-y divide-gray-50 max-h-96 overflow-y-auto">
+              {auditLog.map(u => (
+                <div key={u._id} className="flex items-center gap-3 px-5 py-3 hover:bg-gray-50">
+                  <div className={`w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold flex-shrink-0
+                    ${u.role === 'admin' ? 'bg-rose-100 text-rose-700' : u.role === 'faculty' ? 'bg-cyan-100 text-cyan-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                    {getInitials(u.name)}
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-gray-900 truncate">{u.name}</p>
+                    <p className="text-xs text-gray-400 truncate">{u.email} · {u.department || '—'}</p>
+                  </div>
+                  <div className="text-right flex-shrink-0">
+                    <span className={`text-xs font-bold px-2 py-0.5 rounded-full capitalize
+                      ${u.role === 'admin' ? 'bg-rose-100 text-rose-700' : u.role === 'faculty' ? 'bg-cyan-100 text-cyan-700' : 'bg-emerald-100 text-emerald-700'}`}>
+                      {u.role}
+                    </span>
+                    <p className="text-xs text-gray-400 mt-1">{new Date(u.updatedAt).toLocaleDateString()}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Stat cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -299,6 +396,28 @@ export default function AdminUsers() {
         </div>
       </div>
 
+      {/* Bulk action bar */}
+      {selected.length > 0 && (
+        <div className="flex items-center gap-3 px-4 py-3 bg-indigo-50 border border-indigo-100 rounded-2xl">
+          <span className="text-sm font-semibold text-indigo-700">{selected.length} selected</span>
+          <div className="flex gap-2 ml-auto">
+            <button onClick={() => handleBulkToggle(true)} disabled={bulkLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors disabled:opacity-50">
+              <CheckCircleIcon className="w-3.5 h-3.5" /> Activate
+            </button>
+            <button onClick={() => handleBulkToggle(false)} disabled={bulkLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-amber-700 bg-amber-50 rounded-lg hover:bg-amber-100 transition-colors disabled:opacity-50">
+              <XCircleIcon className="w-3.5 h-3.5" /> Deactivate
+            </button>
+            <button onClick={handleBulkDelete} disabled={bulkLoading}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-red-700 bg-red-50 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50">
+              <TrashIcon className="w-3.5 h-3.5" /> Delete
+            </button>
+            <button onClick={() => setSelected([])} className="text-xs text-gray-500 hover:text-gray-700 font-medium">Clear</button>
+          </div>
+        </div>
+      )}
+
       {/* Table — NO overflow-hidden so dropdowns are not clipped */}
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm">
         {loading ? (
@@ -315,6 +434,11 @@ export default function AdminUsers() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-gray-50/80 border-b border-gray-100">
+                    <th className="px-5 py-3.5">
+                      <input type="checkbox" checked={selected.length === users.length && users.length > 0}
+                        onChange={toggleSelectAll}
+                        className="rounded accent-indigo-600 cursor-pointer" />
+                    </th>
                     <th className="text-left px-5 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider">User</th>
                     <th className="text-left px-4 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider hidden md:table-cell">Role</th>
                     <th className="text-left px-4 py-3.5 text-xs font-bold text-gray-400 uppercase tracking-wider hidden lg:table-cell">Department</th>
@@ -325,7 +449,12 @@ export default function AdminUsers() {
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {users.map((u) => (
-                    <tr key={u._id} className="hover:bg-indigo-50/20 transition-colors">
+                    <tr key={u._id} className={`hover:bg-indigo-50/20 transition-colors ${selected.includes(u._id) ? 'bg-indigo-50/40' : ''}`}>
+                      <td className="px-5 py-4">
+                        <input type="checkbox" checked={selected.includes(u._id)}
+                          onChange={() => toggleSelect(u._id)}
+                          className="rounded accent-indigo-600 cursor-pointer" />
+                      </td>
                       {/* User */}
                       <td className="px-5 py-4">
                         <div className="flex items-center gap-3">

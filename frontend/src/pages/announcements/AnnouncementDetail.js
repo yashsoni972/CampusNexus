@@ -3,7 +3,8 @@ import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
   ArrowLeftIcon, PencilSquareIcon, TrashIcon,
   EyeIcon, CalendarIcon, UserIcon, TagIcon,
-  PaperClipIcon, DocumentIcon, PhotoIcon, ArrowDownTrayIcon
+  PaperClipIcon, DocumentIcon, PhotoIcon, ArrowDownTrayIcon,
+  BookmarkIcon
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
@@ -76,7 +77,9 @@ const AnnouncementDetail = () => {
             <div className="flex-1">
               <div className="flex items-center gap-2 flex-wrap mb-2">
                 {announcement.isPinned && (
-                  <span className="text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">📌 Pinned</span>
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">
+                    <BookmarkIcon className="w-3 h-3" /> Pinned
+                  </span>
                 )}
                 <Badge type="category" value={announcement.category} />
                 <Badge type="priority" value={announcement.priority} />

@@ -91,6 +91,18 @@ const updateUserProfile = async (req, res) => {
       if (req.body[field] !== undefined) updateData[field] = req.body[field];
     });
 
+    // Faculty can only update students from their own department
+    if (req.user.role === 'faculty' && req.user._id.toString() !== userId.toString()) {
+      const targetUser = await User.findById(userId).select('department role');
+      if (!targetUser) return res.status(404).json({ message: 'User not found' });
+      if (targetUser.role !== 'student') {
+        return res.status(403).json({ message: 'Faculty can only update student profiles' });
+      }
+      if (req.user.department && targetUser.department !== req.user.department) {
+        return res.status(403).json({ message: 'Access denied. You can only update students from your department.' });
+      }
+    }
+
     const user = await User.findByIdAndUpdate(userId, { $set: updateData }, { new: true, runValidators: true }).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
 
@@ -109,7 +121,16 @@ const getStudents = async (req, res) => {
     const { department, batch, semester, search } = req.query;
     const query = { role: 'student', isActive: true };
 
-    if (department) query.department = department;
+    // Faculty can only see students from their own department
+    if (req.user.role === 'faculty') {
+      if (req.user.department) {
+        query.department = req.user.department;
+      }
+    } else {
+      // Admin can filter by department optionally
+      if (department) query.department = department;
+    }
+
     if (batch) query.batch = batch;
     if (semester) query.semester = parseInt(semester);
     if (search) {
@@ -169,7 +190,27 @@ const changeUserRole = async (req, res) => {
       { new: true }
     ).select('-password');
     if (!user) return res.status(404).json({ message: 'User not found' });
+
+    // Audit log entry
+    console.log(`[AUDIT] ${new Date().toISOString()} | role_change | by:${req.user._id}(${req.user.name}) | target:${req.params.id}(${user.name}) | newRole:${role}`);
+
     res.json({ message: 'Role updated successfully', user });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// @desc    Get audit log (admin only)
+// @route   GET /api/users/audit-log
+// @access  Private (admin)
+const getAuditLog = async (req, res) => {
+  try {
+    // Return last 50 user changes — sorted by most recent
+    const users = await User.find({})
+      .select('name email role department isActive updatedAt createdAt')
+      .sort({ updatedAt: -1 })
+      .limit(50);
+    res.json({ log: users });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -238,8 +279,22 @@ const changePassword = async (req, res) => {
   }
 };
 
+// @desc    Upload avatar image
+// @route   POST /api/users/avatar
+// @access  Private
+const uploadAvatar = async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ message: 'No image uploaded' });
+    const url = `/uploads/avatars/${req.file.filename}`;
+    await User.findByIdAndUpdate(req.user._id, { avatar: url });
+    res.json({ url });
+  } catch (error) {
+    res.status(500).json({ message: 'Upload failed' });
+  }
+};
+
 module.exports = {
   getUsers, getUserProfile, updateUserProfile,
   getStudents, toggleUserStatus, deleteUser,
-  changeUserRole, changePassword, uploadCertificate
+  changeUserRole, changePassword, uploadCertificate, uploadAvatar, getAuditLog
 };

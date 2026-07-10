@@ -1,10 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import {
   TrophyIcon, PlusIcon, PencilSquareIcon, TrashIcon,
   CodeBracketIcon, StarIcon, XMarkIcon, CheckIcon,
   ArrowLeftIcon, GlobeAltIcon, LinkIcon,
-  DocumentArrowUpIcon, DocumentCheckIcon, ArrowDownTrayIcon
+  DocumentArrowUpIcon, DocumentCheckIcon,
+  BriefcaseIcon, WrenchScrewdriverIcon, ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
@@ -14,7 +15,10 @@ import { getInitials } from '../../utils/helpers';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const ACHIEVEMENT_TYPES = ['Award', 'Certification', 'Leadership', 'Publication', 'Competition', 'Other'];
-const ACHIEVEMENT_ICONS = { Award: '🥇', Certification: '📜', Leadership: '🌟', Publication: '📖', Competition: '🏅', Other: '🎖️' };
+const ACHIEVEMENT_ICON_MAP = {
+  Award: TrophyIcon, Certification: DocumentCheckIcon, Leadership: StarIcon,
+  Publication: CodeBracketIcon, Competition: TrophyIcon, Other: StarIcon,
+};
 const PROFICIENCY_LEVELS = ['Beginner', 'Intermediate', 'Proficient', 'Expert'];
 const PROFICIENCY_COLORS = {
   Beginner: 'bg-gray-100 text-gray-600',
@@ -58,9 +62,11 @@ const Select = ({ options, ...props }) => (
 );
 
 // ─── Empty state ─────────────────────────────────────────────────────────────
-const Empty = ({ icon, text, sub }) => (
+const Empty = ({ icon: Icon, text, sub }) => (
   <div className="text-center py-10">
-    <div className="text-4xl mb-3">{icon}</div>
+    <div className="w-12 h-12 rounded-2xl bg-gray-100 flex items-center justify-center mx-auto mb-3">
+      <Icon className="w-6 h-6 text-gray-400" />
+    </div>
     <p className="text-sm font-medium text-gray-600">{text}</p>
     <p className="text-xs text-gray-400 mt-1">{sub}</p>
   </div>
@@ -68,7 +74,7 @@ const Empty = ({ icon, text, sub }) => (
 
 // ─── Main component ───────────────────────────────────────────────────────────
 export default function AchievementPassport() {
-  const { user: currentUser, updateUser } = useAuth();
+  const { updateUser } = useAuth();
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -141,9 +147,8 @@ export default function AchievementPassport() {
       setCertUploading(false);
     }
 
-    const icon = ACHIEVEMENT_ICONS[achForm.type] || '🎖️';
     const list = [...(profile.achievements || [])];
-    const item = { ...achForm, icon, certificateUrl, date: achForm.date ? new Date(achForm.date + '-01') : undefined };
+    const item = { ...achForm, certificateUrl, date: achForm.date ? new Date(achForm.date + '-01') : undefined };
     if (achModal === 'add') list.push(item);
     else list[achModal] = item;
     await save('achievements', list);
@@ -200,6 +205,8 @@ export default function AchievementPassport() {
     await save('projects', list);
   };
 
+  const handlePrintExport = () => window.print();
+
   if (loading) return <LoadingSpinner fullPage />;
   if (!profile) return null;
 
@@ -208,9 +215,9 @@ export default function AchievementPassport() {
   const projects = profile.projects || [];
 
   const tabs = [
-    { id: 'achievements', label: 'Achievements', icon: '🏆', count: achievements.length },
-    { id: 'skills', label: 'Skills', icon: '🛠️', count: skills.length },
-    { id: 'projects', label: 'Projects', icon: '💼', count: projects.length },
+    { id: 'achievements', label: 'Achievements', icon: TrophyIcon, count: achievements.length },
+    { id: 'skills',       label: 'Skills',       icon: WrenchScrewdriverIcon, count: skills.length },
+    { id: 'projects',     label: 'Projects',     icon: BriefcaseIcon, count: projects.length },
   ];
 
   return (
@@ -220,11 +227,18 @@ export default function AchievementPassport() {
         <Link to="/profile" className="p-2 rounded-xl hover:bg-gray-100 transition-colors">
           <ArrowLeftIcon className="w-5 h-5 text-gray-600" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 className="text-xl font-bold text-gray-900">Achievement Passport</h1>
           <p className="text-sm text-gray-500">Your skills, achievements & projects</p>
         </div>
+        <button
+          onClick={handlePrintExport}
+          className="flex items-center gap-2 px-4 py-2 bg-indigo-600 text-white text-sm font-semibold rounded-xl hover:bg-indigo-700 transition-colors"
+        >
+          <ArrowDownTrayIcon className="w-4 h-4" /> Export PDF
+        </button>
       </div>
+      <style>{`@media print { .no-print { display: none !important; } body { background: white; } }`}</style>
 
       {/* Passport card */}
       <div className="bg-gradient-to-br from-slate-800 via-indigo-900 to-slate-900 rounded-2xl p-6 text-white overflow-hidden relative">
@@ -254,16 +268,16 @@ export default function AchievementPassport() {
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full sm:w-auto sm:inline-flex">
+      {/* Tabs — full width on mobile, inline on larger screens */}
+      <div className="flex gap-1 bg-gray-100 p-1 rounded-xl w-full">
         {tabs.map(t => (
           <button
             key={t.id}
             onClick={() => setActiveTab(t.id)}
-            className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all ${activeTab === t.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            className={`flex-1 flex items-center justify-center gap-1.5 px-2 sm:px-4 py-2.5 rounded-lg text-xs sm:text-sm font-semibold transition-all ${activeTab === t.id ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
           >
-            <span>{t.icon}</span>
-            <span className="hidden sm:inline">{t.label}</span>
+            <t.icon className="w-4 h-4 flex-shrink-0" />
+            <span>{t.label}</span>
             {t.count > 0 && (
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-semibold ${activeTab === t.id ? 'bg-indigo-100 text-indigo-700' : 'bg-gray-200 text-gray-500'}`}>{t.count}</span>
             )}
@@ -281,12 +295,16 @@ export default function AchievementPassport() {
             </button>
           </div>
           {achievements.length === 0 ? (
-            <Empty icon="🏆" text="No achievements yet" sub="Add your awards, certifications, and more" />
+            <Empty icon={TrophyIcon} text="No achievements yet" sub="Add your awards, certifications, and more" />
           ) : (
             <div className="divide-y divide-gray-50">
-              {achievements.map((a, i) => (
+              {achievements.map((a, i) => {
+                const AchIcon = ACHIEVEMENT_ICON_MAP[a.type] || StarIcon;
+                return (
                 <div key={i} className="flex items-start gap-4 px-5 py-4 hover:bg-gray-50 transition-colors group">
-                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-xl flex-shrink-0">{a.icon || ACHIEVEMENT_ICONS[a.type] || '🎖️'}</div>
+                  <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center flex-shrink-0">
+                    <AchIcon className="w-5 h-5 text-amber-600" />
+                  </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-gray-900">{a.title}</p>
                     <div className="flex flex-wrap items-center gap-2 mt-0.5">
@@ -309,12 +327,13 @@ export default function AchievementPassport() {
                       )}
                     </div>
                   </div>
-                  <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                  <div className="flex gap-1 flex-shrink-0">
                     <button onClick={() => openEditAch(i)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-colors"><PencilSquareIcon className="w-4 h-4" /></button>
                     <button onClick={() => deleteAch(i)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"><TrashIcon className="w-4 h-4" /></button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>
@@ -330,7 +349,7 @@ export default function AchievementPassport() {
             </button>
           </div>
           {skills.length === 0 ? (
-            <Empty icon="🛠️" text="No skills added yet" sub="Add your technical and soft skills" />
+            <Empty icon={WrenchScrewdriverIcon} text="No skills added yet" sub="Add your technical and soft skills" />
           ) : (
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {skills.map((s, i) => {
@@ -347,9 +366,9 @@ export default function AchievementPassport() {
                         <div className={`h-full rounded-full bg-indigo-500 transition-all ${PROFICIENCY_WIDTH[level]}`} />
                       </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
-                      <button onClick={() => openEditSkill(i)} className="p-1 rounded-lg hover:bg-white text-gray-400 hover:text-indigo-600 transition-colors"><PencilSquareIcon className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => deleteSkill(i)} className="p-1 rounded-lg hover:bg-white text-gray-400 hover:text-red-500 transition-colors"><TrashIcon className="w-3.5 h-3.5" /></button>
+                    <div className="flex gap-1 flex-shrink-0">
+                      <button onClick={() => openEditSkill(i)} className="p-1.5 rounded-lg hover:bg-white text-gray-400 hover:text-indigo-600 transition-colors"><PencilSquareIcon className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => deleteSkill(i)} className="p-1.5 rounded-lg hover:bg-white text-gray-400 hover:text-red-500 transition-colors"><TrashIcon className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                 );
@@ -369,7 +388,7 @@ export default function AchievementPassport() {
             </button>
           </div>
           {projects.length === 0 ? (
-            <Empty icon="💼" text="No projects added yet" sub="Showcase your work and side projects" />
+            <Empty icon={BriefcaseIcon} text="No projects added yet" sub="Showcase your work and side projects" />
           ) : (
             <div className="divide-y divide-gray-50">
               {projects.map((p, i) => (
@@ -401,7 +420,7 @@ export default function AchievementPassport() {
                         )}
                       </div>
                     </div>
-                    <div className="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
+                    <div className="flex gap-1 flex-shrink-0">
                       <button onClick={() => openEditProj(i)} className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-indigo-600 transition-colors"><PencilSquareIcon className="w-4 h-4" /></button>
                       <button onClick={() => deleteProj(i)} className="p-1.5 rounded-lg hover:bg-red-50 text-gray-400 hover:text-red-600 transition-colors"><TrashIcon className="w-4 h-4" /></button>
                     </div>
@@ -436,7 +455,7 @@ export default function AchievementPassport() {
               <label className="flex items-center gap-2 cursor-pointer border border-dashed border-gray-300 rounded-xl px-3 py-2.5 hover:border-indigo-400 hover:bg-indigo-50 transition-colors">
                 <DocumentArrowUpIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
                 <span className="text-sm text-gray-500 truncate flex-1">
-                  {certFile ? certFile.name : achForm.certificateUrl ? '📄 Certificate already uploaded — click to replace' : 'Click to upload PDF certificate'}
+                {certFile ? certFile.name : achForm.certificateUrl ? 'Certificate uploaded — click to replace' : 'Click to upload PDF certificate'}
                 </span>
                 <input
                   type="file"

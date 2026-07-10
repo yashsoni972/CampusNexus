@@ -182,7 +182,7 @@ const removeMember = async (req, res) => {
   }
 };
 
-// GET /api/clubs/:id/messages
+// GET /api/clubs/:id/messages  — paginated
 const getMessages = async (req, res) => {
   try {
     const club = await Club.findById(req.params.id);
@@ -191,12 +191,24 @@ const getMessages = async (req, res) => {
     const isMember = club.members.some(m => m.user.toString() === req.user._id.toString());
     if (!isMember) return res.status(403).json({ message: 'Join the club to view messages' });
 
+    const page  = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 50);
+    const skip  = (page - 1) * limit;
+    const total = await ClubMessage.countDocuments({ club: req.params.id });
+
     const messages = await ClubMessage.find({ club: req.params.id })
       .populate('sender', 'name avatar role')
-      .sort({ createdAt: 1 })
-      .limit(100);
+      .sort({ createdAt: -1 })   // newest first for pagination
+      .skip(skip)
+      .limit(limit);
 
-    res.json({ messages });
+    res.json({
+      messages: messages.reverse(), // return in ascending order
+      total,
+      page,
+      totalPages: Math.ceil(total / limit),
+      hasMore: skip + messages.length < total,
+    });
   } catch {
     res.status(500).json({ message: 'Server error' });
   }

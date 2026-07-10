@@ -1,5 +1,9 @@
 const Complaint = require('../models/Complaint');
 
+const getIO = () => {
+  try { return require('../server').io; } catch { return null; }
+};
+
 // @desc    Get complaints
 // @route   GET /api/complaints
 // @access  Private
@@ -119,6 +123,15 @@ const updateStatus = async (req, res) => {
     await complaint.save();
     await complaint.populate('submittedBy', 'name rollNumber department');
     await complaint.populate('assignedTo', 'name role');
+
+    // Notify the student who submitted the complaint in real-time
+    const io = getIO();
+    if (io && complaint.submittedBy?._id) {
+      io.to(`user_${complaint.submittedBy._id}`).emit('complaint_update', {
+        complaintId: complaint._id,
+        message: `Your complaint "${complaint.title}" status changed to ${status}`
+      });
+    }
 
     res.json({ message: 'Status updated successfully', complaint });
   } catch (error) {

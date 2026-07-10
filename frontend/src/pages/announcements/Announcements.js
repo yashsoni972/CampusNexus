@@ -25,7 +25,7 @@ const AnnouncementCard = ({ announcement }) => (
         <div className="flex items-center gap-2 flex-wrap mb-1.5">
           {announcement.isPinned && (
             <span className="inline-flex items-center gap-1 text-xs font-medium text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">
-              📌 Pinned
+              <BookmarkIcon className="w-3 h-3" /> Pinned
             </span>
           )}
           <Badge type="category" value={announcement.category} />

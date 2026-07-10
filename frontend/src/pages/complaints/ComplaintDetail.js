@@ -21,8 +21,9 @@ const ComplaintDetail = () => {
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [statusForm, setStatusForm] = useState({ status: '', note: '' });
+  const [statusForm, setStatusForm] = useState({ status: '', note: '', assignedTo: '' });
   const [showStatusForm, setShowStatusForm] = useState(false);
+  const [facultyList, setFacultyList] = useState([]);
   const [rating, setRating] = useState(0);
   const [feedbackComment, setFeedbackComment] = useState('');
   const [submittingFeedback, setSubmittingFeedback] = useState(false);
@@ -32,7 +33,7 @@ const ComplaintDetail = () => {
       try {
         const res = await api.get(`/complaints/${id}`);
         setComplaint(res.data.complaint);
-        setStatusForm(f => ({ ...f, status: res.data.complaint.status }));
+        setStatusForm(f => ({ ...f, status: res.data.complaint.status, assignedTo: res.data.complaint.assignedTo?._id || '' }));
       } catch {
         toast.error('Complaint not found');
         navigate('/complaints');
@@ -41,6 +42,10 @@ const ComplaintDetail = () => {
       }
     };
     fetch();
+    // Load faculty list for assignment
+    api.get('/users', { params: { role: 'faculty', limit: 50 } })
+      .then(r => setFacultyList(r.data.users || []))
+      .catch(() => {});
   }, [id]);
 
   const handleAddComment = async (e) => {
@@ -188,6 +193,13 @@ const ComplaintDetail = () => {
               <select className="input-field text-sm" value={statusForm.status}
                 onChange={e => setStatusForm(f => ({ ...f, status: e.target.value }))}>
                 {STATUSES.map(s => <option key={s} value={s}>{s.replace('_', ' ')}</option>)}
+              </select>
+              <select className="input-field text-sm" value={statusForm.assignedTo}
+                onChange={e => setStatusForm(f => ({ ...f, assignedTo: e.target.value }))}>
+                <option value="">— Assign to faculty (optional) —</option>
+                {facultyList.map(f => (
+                  <option key={f._id} value={f._id}>{f.name} ({f.department || 'No dept'})</option>
+                ))}
               </select>
               <input type="text" className="input-field text-sm" placeholder="Add a note (optional)"
                 value={statusForm.note} onChange={e => setStatusForm(f => ({ ...f, note: e.target.value }))} />
