@@ -5,7 +5,7 @@ import {
   UserGroupIcon, ClockIcon, LinkIcon, TrashIcon,
   PaperClipIcon, DocumentIcon, PhotoIcon, ArrowDownTrayIcon
 } from '@heroicons/react/24/outline';
-import api from '../../utils/api';
+import api, { STATIC_BASE } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatDateTime, formatDate } from '../../utils/helpers';
 import Badge from '../../components/common/Badge';
@@ -182,7 +182,7 @@ const EventDetail = () => {
                         : <DocumentIcon className="w-5 h-5 text-gray-500 flex-shrink-0" />}
                       <span className="flex-1 text-sm text-gray-700 truncate">{att.filename}</span>
                       <a
-                        href={`http://localhost:5000${att.url}`}
+                        href={`${STATIC_BASE}${att.url}`}
                         target="_blank"
                         rel="noreferrer"
                         download={att.filename}

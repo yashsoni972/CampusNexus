@@ -6,7 +6,7 @@ import {
   PaperClipIcon, DocumentIcon, PhotoIcon, ArrowDownTrayIcon,
   BookmarkIcon
 } from '@heroicons/react/24/outline';
-import api from '../../utils/api';
+import api, { STATIC_BASE } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { formatDateTime } from '../../utils/helpers';
 import Badge from '../../components/common/Badge';
@@ -176,7 +176,7 @@ const AnnouncementDetail = () => {
                       <span className="flex-1 text-sm text-gray-700 truncate">{att.filename}</span>
                       {att.size && <span className="text-xs text-gray-400">{(att.size / 1024).toFixed(0)} KB</span>}
                       <a
-                        href={`http://localhost:5000${att.url}`}
+                        href={`${STATIC_BASE}${att.url}`}
                         target="_blank"
                         rel="noreferrer"
                         download={att.filename}

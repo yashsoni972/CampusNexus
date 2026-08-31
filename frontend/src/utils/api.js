@@ -9,6 +9,9 @@ const api = axios.create({
   }
 });
 
+// Base URL for static files (uploads, avatars, certificates)
+export const STATIC_BASE = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+
 // Request interceptor
 api.interceptors.request.use(
   (config) => {

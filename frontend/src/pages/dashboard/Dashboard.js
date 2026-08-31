@@ -5,7 +5,7 @@ import {
   UsersIcon, ChartBarIcon, PlusIcon, CheckCircleIcon,
   ArrowTrendingUpIcon, AcademicCapIcon,
   PencilSquareIcon, XMarkIcon, MagnifyingGlassIcon,
-  BookmarkIcon,
+  BookmarkIcon, DocumentArrowDownIcon,
 } from '@heroicons/react/24/outline';
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -14,6 +14,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
 import { timeAgo } from '../../utils/helpers';
+import { generateAttendancePDF, generateMarksheetPDF } from '../../utils/generatePDF';
 import { PageLoader } from '../../components/common/LoadingSpinner';
 import Badge from '../../components/common/Badge';
 import toast from 'react-hot-toast';
@@ -363,13 +364,33 @@ const FacultyDashboard = ({ data }) => {
             </h3>
             <p className="text-xs text-gray-400 mt-0.5 ml-8">Showing students from your department only. Click the edit icon to update attendance.</p>
           </div>
-          <button
-            onClick={() => fetchStudents(searchStudent, semesterFilter)}
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
-          >
-            <ArrowTrendingUpIcon className="w-3.5 h-3.5" />
-            {studentsLoaded ? 'Refresh' : 'Load Students'}
-          </button>
+          <div className="flex items-center gap-2">
+            {studentsLoaded && students.length > 0 && (
+              <>
+                <button
+                  onClick={() => generateAttendancePDF({ students, facultyName: facultyUser?.name, department: facultyUser?.department, semester: semesterFilter })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 rounded-lg hover:bg-emerald-100 transition-colors"
+                  title="Download Attendance Report PDF"
+                >
+                  <DocumentArrowDownIcon className="w-3.5 h-3.5" /> Attendance PDF
+                </button>
+                <button
+                  onClick={() => generateMarksheetPDF({ students, facultyName: facultyUser?.name, department: facultyUser?.department, semester: semesterFilter })}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-violet-700 bg-violet-50 rounded-lg hover:bg-violet-100 transition-colors"
+                  title="Download Marksheet PDF"
+                >
+                  <DocumentArrowDownIcon className="w-3.5 h-3.5" /> Marksheet PDF
+                </button>
+              </>
+            )}
+            <button
+              onClick={() => fetchStudents(searchStudent, semesterFilter)}
+              className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-indigo-600 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors"
+            >
+              <ArrowTrendingUpIcon className="w-3.5 h-3.5" />
+              {studentsLoaded ? 'Refresh' : 'Load Students'}
+            </button>
+          </div>
         </div>
 
         {/* Search + Semester Filter */}

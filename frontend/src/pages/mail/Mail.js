@@ -6,7 +6,7 @@ import {
   ArrowPathIcon, EyeIcon, CheckCircleIcon
 } from '@heroicons/react/24/outline';
 import { InboxIcon as InboxSolid } from '@heroicons/react/24/solid';
-import api from '../../utils/api';
+import api, { STATIC_BASE } from '../../utils/api';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
 import { getInitials, formatDate } from '../../utils/helpers';
@@ -294,7 +294,7 @@ function MailDetail({ mail, onBack, onTrash, currentUserId }) {
             <div className="flex flex-wrap gap-2">
               {mail.attachments.map(att => {
                 const isImg = /\.(jpg|jpeg|png|gif)$/i.test(att.originalName);
-                const url   = `http://localhost:5000/uploads/mail/${att.filename}`;
+                const url   = `${STATIC_BASE}/uploads/mail/${att.filename}`;
                 return (
                   <a key={att._id} href={url} target="_blank" rel="noreferrer"
                     className="flex items-center gap-2 bg-white border border-gray-200 rounded-xl px-3 py-2.5 hover:border-indigo-300 hover:bg-indigo-50 transition-colors group">

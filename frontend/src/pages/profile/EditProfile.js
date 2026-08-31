@@ -6,7 +6,7 @@ import {
   PencilSquareIcon, ShieldCheckIcon, CameraIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../utils/api';
+import api, { STATIC_BASE } from '../../utils/api';
 import { DEPARTMENTS, getInitials } from '../../utils/helpers';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -329,7 +329,7 @@ export default function EditProfile() {
           <div className="relative flex-shrink-0">
             <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${grad} shadow-md border-4 border-white flex items-center justify-center overflow-hidden`}>
               {avatarPreview || user?.avatar ? (
-                <img src={avatarPreview || `http://localhost:5000${user.avatar}`} alt="avatar" className="w-full h-full object-cover" />
+                <img src={avatarPreview || `${STATIC_BASE}${user.avatar}`} alt="avatar" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-xl font-extrabold text-white">{getInitials(form.name || user?.name)}</span>
               )}

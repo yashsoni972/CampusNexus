@@ -8,10 +8,11 @@ import {
   BriefcaseIcon, WrenchScrewdriverIcon, ArrowDownTrayIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../utils/api';
+import api, { STATIC_BASE } from '../../utils/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { getInitials } from '../../utils/helpers';
+import { getSkillStyle, getSkillInitials, getSkillLabel } from '../../utils/skillIcons';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const ACHIEVEMENT_TYPES = ['Award', 'Certification', 'Leadership', 'Publication', 'Competition', 'Other'];
@@ -316,7 +317,7 @@ export default function AchievementPassport() {
                       <span className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-600 rounded-full font-medium">{a.type}</span>
                       {a.certificateUrl && (
                         <a
-                          href={`http://localhost:5000${a.certificateUrl}`}
+                          href={`${STATIC_BASE}${a.certificateUrl}`}
                           target="_blank"
                           rel="noreferrer"
                           onClick={e => e.stopPropagation()}
@@ -353,22 +354,29 @@ export default function AchievementPassport() {
           ) : (
             <div className="p-5 grid grid-cols-1 sm:grid-cols-2 gap-3">
               {skills.map((s, i) => {
-                const name = s.name || s;
+                const name  = s.name || s;
                 const level = s.proficiency || 'Intermediate';
+                const style = getSkillStyle(name);
+                const init  = getSkillInitials(name);
+                const label = getSkillLabel(name);
                 return (
-                  <div key={i} className="group flex items-center gap-3 p-3 rounded-xl border border-gray-100 hover:border-indigo-100 hover:bg-indigo-50/30 transition-colors">
+                  <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${style.border} ${style.bg} transition-colors`}>
+                    {/* Skill icon badge */}
+                    <div className={`w-10 h-10 rounded-xl ${style.bg} border ${style.border} flex items-center justify-center flex-shrink-0 shadow-sm`}>
+                      <span className={`text-xs font-bold ${style.text}`}>{init}</span>
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between mb-1.5">
-                        <span className="text-sm font-medium text-gray-900 truncate">{name}</span>
-                        <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${PROFICIENCY_COLORS[level]}`}>{level}</span>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className={`text-sm font-bold ${style.text} truncate`}>{label}</span>
+                        <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ml-2 flex-shrink-0 ${PROFICIENCY_COLORS[level]}`}>{level}</span>
                       </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div className={`h-full rounded-full bg-indigo-500 transition-all ${PROFICIENCY_WIDTH[level]}`} />
+                      <div className="h-1.5 bg-white/60 rounded-full overflow-hidden border border-white/40">
+                        <div className={`h-full rounded-full bg-current opacity-60 transition-all ${PROFICIENCY_WIDTH[level]}`} style={{ color: style.text.replace('text-', '') }} />
                       </div>
                     </div>
                     <div className="flex gap-1 flex-shrink-0">
-                      <button onClick={() => openEditSkill(i)} className="p-1.5 rounded-lg hover:bg-white text-gray-400 hover:text-indigo-600 transition-colors"><PencilSquareIcon className="w-3.5 h-3.5" /></button>
-                      <button onClick={() => deleteSkill(i)} className="p-1.5 rounded-lg hover:bg-white text-gray-400 hover:text-red-500 transition-colors"><TrashIcon className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => openEditSkill(i)} className="p-1.5 rounded-lg hover:bg-white/60 text-gray-400 hover:text-indigo-600 transition-colors"><PencilSquareIcon className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => deleteSkill(i)} className="p-1.5 rounded-lg hover:bg-white/60 text-gray-400 hover:text-red-500 transition-colors"><TrashIcon className="w-3.5 h-3.5" /></button>
                     </div>
                   </div>
                 );
@@ -466,7 +474,7 @@ export default function AchievementPassport() {
               </label>
               {achForm.certificateUrl && !certFile && (
                 <a
-                  href={`http://localhost:5000${achForm.certificateUrl}`}
+                  href={`${STATIC_BASE}${achForm.certificateUrl}`}
                   target="_blank"
                   rel="noreferrer"
                   className="inline-flex items-center gap-1 mt-1.5 text-xs text-green-700 hover:underline"
