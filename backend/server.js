@@ -25,10 +25,13 @@ const ClubMessage = require('./models/ClubMessage');
 const Club = require('./models/Club');
 const User = require('./models/User');
 
+// Sanitize CLIENT_URL — strip whitespace, quotes, newlines
+const CLIENT_URL = (process.env.CLIENT_URL || 'http://localhost:3000').trim().replace(/['"]/g, '');
+
 const app = express();
 const httpServer = http.createServer(app);
 const io = new Server(httpServer, {
-  cors: { origin: process.env.CLIENT_URL || 'http://localhost:3000', credentials: true }
+  cors: { origin: CLIENT_URL, credentials: true }
 });
 
 // Security middleware
@@ -37,7 +40,7 @@ app.use(helmet({
   contentSecurityPolicy: false,
 }));
 app.use(cors({
-  origin: process.env.CLIENT_URL || 'http://localhost:3000',
+  origin: CLIENT_URL,
   credentials: true
 }));
 
