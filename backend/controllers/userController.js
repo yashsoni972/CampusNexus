@@ -1,4 +1,11 @@
 const User = require('../models/User');
+const AuditLog = require('../models/AuditLog');
+
+const log = (actor, action, targetUser, details) =>
+  AuditLog.create({
+    actor: actor._id, actorName: actor.name,
+    action, targetUser: targetUser?._id, targetName: targetUser?.name, details
+  }).catch(() => {});
 
 // @desc    Get all users (admin only)
 // @route   GET /api/users
@@ -165,11 +172,8 @@ const toggleUserStatus = async (req, res) => {
       user.isActive = !user.isActive;
     }
     await user.save({ validateBeforeSave: false });
-
-    res.json({
-      message: `User updated successfully`,
-      user: { isActive: user.isActive, isVerified: user.isVerified }
-    });
+    log(req.user, 'STATUS_TOGGLE', user, `${user.isActive ? 'Activated' : 'Deactivated'} user ${user.email}`);
+    res.json({ message: 'User updated successfully', user: { isActive: user.isActive, isVerified: user.isVerified } });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -184,17 +188,12 @@ const changeUserRole = async (req, res) => {
     if (!['student', 'faculty', 'admin'].includes(role)) {
       return res.status(400).json({ message: 'Invalid role' });
     }
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { role },
-      { new: true }
-    ).select('-password');
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    // Audit log entry
-    console.log(`[AUDIT] ${new Date().toISOString()} | role_change | by:${req.user._id}(${req.user.name}) | target:${req.params.id}(${user.name}) | newRole:${role}`);
-
-    res.json({ message: 'Role updated successfully', user });
+    const existing = await User.findById(req.params.id);
+    if (!existing) return res.status(404).json({ message: 'User not found' });
+    const prevRole = existing.role;
+    const updatedUser = await User.findByIdAndUpdate(req.params.id, { role }, { new: true }).select('-password');
+    log(req.user, 'ROLE_CHANGE', updatedUser, `Changed role from ${prevRole} to ${role}`);
+    res.json({ message: 'Role updated successfully', user: updatedUser });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -205,12 +204,12 @@ const changeUserRole = async (req, res) => {
 // @access  Private (admin)
 const getAuditLog = async (req, res) => {
   try {
-    // Return last 50 user changes — sorted by most recent
-    const users = await User.find({})
-      .select('name email role department isActive updatedAt createdAt')
-      .sort({ updatedAt: -1 })
-      .limit(50);
-    res.json({ log: users });
+    const logs = await AuditLog.find()
+      .sort({ createdAt: -1 })
+      .limit(100)
+      .populate('actor', 'name email role')
+      .populate('targetUser', 'name email role');
+    res.json({ logs });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });
   }
@@ -230,6 +229,7 @@ const deleteUser = async (req, res) => {
     }
 
     await User.findByIdAndDelete(req.params.id);
+    log(req.user, 'USER_DELETE', user, `Deleted user ${user.email}`);
     res.json({ message: 'User deleted successfully' });
   } catch (error) {
     res.status(500).json({ message: 'Server error' });

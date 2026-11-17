@@ -222,8 +222,10 @@ export default function EditProfile() {
     try {
       const fd = new FormData();
       fd.append('avatar', file);
-      const res = await api.post('/users/avatar', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
-      updateUser({ avatar: res.data.url });
+      const res = await api.post('/users/avatar', fd, { headers: { 'Content-Type': undefined } });
+      const avatarUrl = res.data.url;
+      updateUser({ avatar: avatarUrl });
+      setAvatarPreview(`${STATIC_BASE}${avatarUrl}`);
       toast.success('Profile photo updated!');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Upload failed');
@@ -329,7 +331,11 @@ export default function EditProfile() {
           <div className="relative flex-shrink-0">
             <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${grad} shadow-md border-4 border-white flex items-center justify-center overflow-hidden`}>
               {avatarPreview || user?.avatar ? (
-                <img src={avatarPreview || `${STATIC_BASE}${user.avatar}`} alt="avatar" className="w-full h-full object-cover" />
+                <img
+                  src={avatarPreview || (user.avatar.startsWith('http') ? user.avatar : `${STATIC_BASE}${user.avatar}`)}
+                  alt="avatar"
+                  className="w-full h-full object-cover"
+                />
               ) : (
                 <span className="text-xl font-extrabold text-white">{getInitials(form.name || user?.name)}</span>
               )}

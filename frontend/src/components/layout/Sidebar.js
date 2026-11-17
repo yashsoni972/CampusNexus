@@ -15,7 +15,7 @@ import {
 } from '@heroicons/react/24/solid';
 import { useAuth } from '../../contexts/AuthContext';
 import { getInitials } from '../../utils/helpers';
-import api from '../../utils/api';
+import api, { STATIC_BASE } from '../../utils/api';
 
 const roleConfig = {
   admin:   { grad: 'from-[#FF375F] to-[#FF9F0A]', dot: 'bg-[#FF375F]',  label: 'Administrator',  ring: 'ring-rose-300' },
@@ -148,7 +148,7 @@ const Sidebar = ({ isOpen, onClose }) => {
             <div className="relative flex items-center gap-3">
               <div className={`w-11 h-11 rounded-2xl bg-white/25 flex items-center justify-center font-bold text-white text-sm flex-shrink-0 border-2 border-white/40 overflow-hidden ring-2 ring-white/20`}>
                 {user?.avatar
-                  ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                  ? <img src={user.avatar.startsWith('http') ? user.avatar : `${STATIC_BASE}${user.avatar}`} alt={user.name} className="w-full h-full object-cover" />
                   : <span className="text-base">{getInitials(user?.name)}</span>
                 }
               </div>

@@ -12,7 +12,7 @@ import api, { STATIC_BASE } from '../../utils/api';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { getInitials } from '../../utils/helpers';
-import { getSkillStyle, getSkillInitials, getSkillLabel } from '../../utils/skillIcons';
+import { getSkillStyle, getSkillInitials, getSkillLabel, getSkillSvgIcon } from '../../utils/skillIcons';
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 const ACHIEVEMENT_TYPES = ['Award', 'Certification', 'Leadership', 'Publication', 'Competition', 'Other'];
@@ -137,7 +137,7 @@ export default function AchievementPassport() {
         const fd = new FormData();
         fd.append('certificate', certFile);
         const res = await api.post('/users/achievements/certificate', fd, {
-          headers: { 'Content-Type': 'multipart/form-data' }
+          headers: { 'Content-Type': undefined }
         });
         certificateUrl = res.data.url;
       } catch {
@@ -246,8 +246,10 @@ export default function AchievementPassport() {
         <div className="absolute top-0 right-0 w-64 h-64 bg-indigo-500/10 rounded-full -translate-y-1/2 translate-x-1/4" />
         <div className="absolute bottom-0 left-0 w-48 h-48 bg-purple-500/10 rounded-full translate-y-1/2 -translate-x-1/4" />
         <div className="relative flex flex-col sm:flex-row items-start sm:items-center gap-4">
-          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-2xl font-bold flex-shrink-0 border-2 border-white/20">
-            {getInitials(profile.name)}
+          <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-indigo-400 to-purple-500 flex items-center justify-center text-2xl font-bold flex-shrink-0 border-2 border-white/20 overflow-hidden">
+            {profile.avatar
+              ? <img src={profile.avatar.startsWith('http') ? profile.avatar : `${STATIC_BASE}${profile.avatar}`} alt={profile.name} className="w-full h-full object-cover" />
+              : <span className="text-2xl font-bold text-white">{getInitials(profile.name)}</span>}
           </div>
           <div className="flex-1">
             <p className="text-xs font-semibold text-indigo-300 uppercase tracking-widest mb-1">Achievement Passport</p>
@@ -363,7 +365,7 @@ export default function AchievementPassport() {
                   <div key={i} className={`flex items-center gap-3 p-3 rounded-xl border ${style.border} ${style.bg} transition-colors`}>
                     {/* Skill icon badge */}
                     <div className={`w-10 h-10 rounded-xl ${style.bg} border ${style.border} flex items-center justify-center flex-shrink-0 shadow-sm`}>
-                      <span className={`text-xs font-bold ${style.text}`}>{init}</span>
+                      {(() => { const Svg = getSkillSvgIcon(name); return Svg ? <Svg /> : <span className={`text-xs font-bold ${style.text}`}>{init}</span>; })()}
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between mb-1">

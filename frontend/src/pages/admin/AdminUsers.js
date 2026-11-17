@@ -5,6 +5,7 @@ import {
   EllipsisVerticalIcon, UserCircleIcon, ShieldCheckIcon,
   TrashIcon, PencilSquareIcon, CheckCircleIcon,
   XCircleIcon, ArrowPathIcon, AcademicCapIcon,
+  ClipboardDocumentListIcon,
 } from '@heroicons/react/24/outline';
 import api from '../../utils/api';
 import { formatDate, getInitials } from '../../utils/helpers';

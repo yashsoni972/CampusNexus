@@ -10,7 +10,7 @@ import {
   BellAlertIcon,
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
-import api from '../../utils/api';
+import api, { STATIC_BASE } from '../../utils/api';
 import { formatDate, getInitials } from '../../utils/helpers';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import toast from 'react-hot-toast';
@@ -58,6 +58,8 @@ export default function Profile() {
 
   const isOwnProfile = !id || id === currentUser?._id;
   const rc = roleConfig[profile?.role] || roleConfig.student;
+  // For own profile, always use latest avatar from auth context
+  const displayAvatar = isOwnProfile ? (currentUser?.avatar || profile?.avatar) : profile?.avatar;
 
   useEffect(() => {
     const fetch = async () => {
@@ -113,7 +115,7 @@ export default function Profile() {
           <div className="flex items-end justify-between -mt-14 mb-5">
             <div className={`w-24 h-24 rounded-2xl bg-white shadow-xl border-4 border-white flex items-center justify-center overflow-hidden ring-4 ${rc.ring} animate-bounce-in`}>
               {profile.avatar ? (
-                <img src={profile.avatar} alt={profile.name} className="w-full h-full object-cover" />
+                <img src={displayAvatar.startsWith('http') ? displayAvatar : `${STATIC_BASE}${displayAvatar}`} alt={profile.name} className="w-full h-full object-cover" />
               ) : (
                 <span className={`text-3xl font-extrabold bg-gradient-to-br ${rc.gradient} bg-clip-text text-transparent`}>
                   {getInitials(profile.name)}

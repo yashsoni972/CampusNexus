@@ -275,7 +275,6 @@ const FacultyDashboard = ({ data }) => {
     setLoadingStudents(true);
     try {
       const params = {};
-      // Faculty can only see students from their own department
       if (facultyUser?.department) params.department = facultyUser.department;
       if (query.trim()) params.search = query.trim();
       if (semester) params.semester = semester;
@@ -288,6 +287,9 @@ const FacultyDashboard = ({ data }) => {
       setLoadingStudents(false);
     }
   };
+
+  // Auto-load on mount
+  useEffect(() => { fetchStudents(); }, []); // eslint-disable-line
 
   const openAttendanceModal = (student) => {
     setAttendanceModal({ open: true, student });

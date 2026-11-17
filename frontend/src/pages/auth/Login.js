@@ -6,9 +6,9 @@ import api from '../../utils/api';
 import toast from 'react-hot-toast';
 
 const DEMOS = {
-  student: { email: 'student@college.edu', password: 'student1234' },
-  faculty: { email: 'faculty@college.edu', password: 'faculty1234' },
-  admin:   { email: 'admin@college.edu',   password: 'admin1234' },
+  student: { email: 'arjun.mehta@campusnexus.com',  password: 'Student@123' },
+  faculty: { email: 'priya.sharma@campusnexus.com', password: 'Faculty@123' },
+  admin:   { email: 'admin@campusnexus.com',         password: 'Admin@123'   },
 };
 
 const FEATURES = [

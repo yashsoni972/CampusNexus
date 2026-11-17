@@ -168,7 +168,7 @@ const userSchema = new mongoose.Schema({
   },
   otpPurpose: {
     type: String,
-    enum: ['verification', 'login'],
+    enum: ['verification', 'login', 'reset'],
     select: false
   },
 

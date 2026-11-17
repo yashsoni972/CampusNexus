@@ -8,7 +8,7 @@ import {
 } from '@heroicons/react/24/outline';
 import { useAuth } from '../../contexts/AuthContext';
 import { useSocket } from '../../contexts/SocketContext';
-import api from '../../utils/api';
+import api, { STATIC_BASE } from '../../utils/api';
 import { getInitials } from '../../utils/helpers';
 
 const roleConfig = {
@@ -237,7 +237,7 @@ const Header = ({ onMenuToggle }) => {
             <div className="w-8 h-8 rounded-xl overflow-hidden ring-2 flex-shrink-0"
               style={{ ringColor: rc.color + '40' }}>
               {user?.avatar
-                ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                ? <img src={user.avatar.startsWith('http') ? user.avatar : `${STATIC_BASE}${user.avatar}`} alt={user.name} className="w-full h-full object-cover" />
                 : <div className={`w-full h-full bg-gradient-to-br ${rc.grad} flex items-center justify-center text-white text-xs font-bold`}>
                     {getInitials(user?.name)}
                   </div>
@@ -269,7 +269,7 @@ const Header = ({ onMenuToggle }) => {
                 <div className="relative flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-white/25 border border-white/40 overflow-hidden flex-shrink-0 flex items-center justify-center font-bold text-white text-sm">
                     {user?.avatar
-                      ? <img src={user.avatar} alt={user.name} className="w-full h-full object-cover" />
+                      ? <img src={user.avatar.startsWith('http') ? user.avatar : `${STATIC_BASE}${user.avatar}`} alt={user.name} className="w-full h-full object-cover" />
                       : getInitials(user?.name)
                     }
                   </div>
